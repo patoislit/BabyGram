@@ -524,14 +524,14 @@ def api_posts():
             """SELECT p.id, p.image_seed, p.caption, p.created_at,
                       COUNT(DISTINCT l.id) AS like_count,
                       COUNT(DISTINCT c.id) AS comment_count,
-                      COALESCE(u.username,'BabyFeed') AS author_name,
+                      COALESCE(u.username,'BabyGram') AS author_name,
                       COALESCE(u.avatar_seed,5000)    AS author_avatar,
                       EXISTS(SELECT 1 FROM likes WHERE user_id=? AND post_id=p.id) AS is_liked
                FROM posts p
                LEFT JOIN likes l    ON p.id=l.post_id
                LEFT JOIN comments c ON p.id=c.post_id
                LEFT JOIN users u    ON p.author_id=u.id
-               GROUP BY p.id ORDER BY p.id DESC
+               GROUP BY p.id ORDER BY RANDOM()
                LIMIT ? OFFSET ?""",
             (uid, per_page, offset),
         ).fetchall()
@@ -675,6 +675,25 @@ def api_users():
     )
 
 
+@app.route("/api/send_message", methods=["POST"])
+@login_required
+def api_send_message():
+    """HTTP záloha pre odosielanie správ ak WebSocket nefunguje."""
+    data = request.get_json()
+    tid  = int(data.get("target_id", 0))
+    text = (data.get("text") or "").strip()
+    uid  = session["user_id"]
+    if not (tid and text):
+        return jsonify(error="Chýba text alebo príjemca"), 400
+    with get_db() as conn:
+        conn.execute(
+            "INSERT INTO messages (sender_id, receiver_id, text) VALUES (?,?,?)",
+            (uid, tid, text),
+        )
+        conn.commit()
+    return jsonify(success=True)
+
+
 @app.route("/api/messages/<int:target_id>")
 @login_required
 def api_messages(target_id):
@@ -714,31 +733,41 @@ def on_join(data):
     tid = int(data.get("target_id", 0))
     if uid and tid:
         join_room(_room(uid, tid))
+        # Potvrď spojenie odosielateľovi
+        emit("joined", {"room": _room(uid, tid)})
 
 
 @socketio.on("send_message")
 def on_message(data):
-    uid = session.get("user_id")
-    tid = int(data.get("target_id", 0))
+    uid  = session.get("user_id")
+    name = session.get("username", "?")
+    tid  = int(data.get("target_id", 0))
     text = (data.get("text") or "").strip()
     if not (uid and tid and text):
         return
+
+    # Ulož správu do databázy
     with get_db() as conn:
         conn.execute(
             "INSERT INTO messages (sender_id, receiver_id, text) VALUES (?,?,?)",
             (uid, tid, text),
         )
         conn.commit()
+
+    now = datetime.now().strftime("%H:%M")
+
+    # Pošli PRÍJEMCOVI (include_self=False → odosielateľ ju má už z optimistic update)
     emit(
         "new_message",
         {
-            "sender_id": uid,
-            "sender_name": session.get("username"),
-            "text": text,
-            "is_mine": False,
-            "created_at": datetime.now().strftime("%H:%M"),
+            "sender_id":   uid,
+            "sender_name": name,
+            "text":        text,
+            "is_mine":     False,   # pre príjemcu je vždy False
+            "created_at":  now,
         },
         room=_room(uid, tid),
+        include_self=False,  # ← kľúčová oprava: odosielateľ nedostane echo
     )
 
 

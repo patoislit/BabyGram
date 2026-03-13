@@ -22,7 +22,7 @@ from flask_socketio import SocketIO, emit, join_room
 app = Flask(__name__)
 app.secret_key = "baby-social-secret-2024"
 
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode="eventlet")
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "database.db")
 
@@ -756,7 +756,11 @@ def on_typing(data):
 
 
 # ── Spustenie ─────────────────────────────────────────────────────────────────
+# init_db() sa volá vždy – aj pri Gunicorn spustení na Renderi
+init_db()
+
 if __name__ == "__main__":
-    init_db()
-    print("🍼  Baby Social App beží na  →  http://localhost:5000")
-    socketio.run(app, debug=True, host="0.0.0.0", port=5000, use_reloader=False)
+    import os
+    port = int(os.environ.get("PORT", 5000))
+    print(f"🍼  Baby Social App beží na  →  http://localhost:{port}")
+    socketio.run(app, debug=False, host="0.0.0.0", port=port, use_reloader=False)

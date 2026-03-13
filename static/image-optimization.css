@@ -1,0 +1,35 @@
+.lazy-load {
+  background: rgba(255, 255, 255, 0.5);
+  filter: blur(15px);
+  position: relative;
+}
+
+.image-loading {
+  content: url('path/to/loading.gif'); /* Placeholder for image loading */
+  display: block;
+}
+
+.aspect-ratio-container {
+  position: relative;
+  width: 100%;
+  /* Adjust height according to aspect ratio */
+}
+
+.aspect-ratio-container::before {
+  display: block;
+  content: '';
+  padding-top: 75%; /* Example: 4:3 aspect ratio */
+}
+
+.image-container {
+  width: 100%;
+  height: auto;
+  overflow: hidden;
+}
+
+@media (max-width: 600px) {
+  .image-container img {
+    width: 100%;
+    height: auto;
+  }
+}

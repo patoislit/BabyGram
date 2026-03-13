@@ -1,57 +1,17 @@
-{% extends "layout.html" %}
-{% block title %}Feed – BabyGram 🍼{% endblock %}
-
-{% block content %}
-<div class="feed-wrap">
-
-  <!-- Stories row (decorative) -->
-  <div class="stories-row" id="storiesRow">
-    <div class="story add-story">
-      <div class="story-ring add">
-        <i class="bi bi-plus-lg"></i>
-      </div>
-      <span>Pridať</span>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feed</title>
+</head>
+<body>
+    <div class="content">
+        <!-- Other sections of the page -->
     </div>
-    {% for seed in range(1, 11) %}
-    <div class="story">
-      <div class="story-ring">
-        <img src="https://loremflickr.com/70/70/baby,newborn?lock={{ seed * 13 }}" alt="story" loading="lazy"/>
-      </div>
-      <span>bábätko{{ loop.index }}</span>
-    </div>
-    {% endfor %}
-  </div>
 
-  <!-- Post grid -->
-  <div id="postFeed"></div>
-
-  <!-- Sentinel pre infinite scroll -->
-  <div id="feedSentinel" class="sentinel"></div>
-
-  <!-- Loading -->
-  <div id="feedLoading" class="feed-loading hidden">
-    <div class="dots-loader"><span></span><span></span><span></span></div>
-  </div>
-</div>
-
-<!-- ── Komentárový modal ──────────────────────────────────────────────────── -->
-<div id="commentModal" class="modal-overlay hidden" onclick="closeCommentModal(event)">
-  <div class="modal-sheet" id="commentSheet">
-    <div class="modal-handle"></div>
-    <div class="modal-header">
-      <h3>Komentáre 💬</h3>
-      <button onclick="closeCommentModal()" class="modal-close">
-        <i class="bi bi-x-lg"></i>
-      </button>
-    </div>
-    <div id="commentList" class="comment-list"></div>
-    <div class="comment-input-bar">
-      <input id="commentInput" type="text" placeholder="Napíš komentár... 🌸"
-             maxlength="200" onkeydown="if(event.key==='Enter') submitComment()"/>
-      <button onclick="submitComment()" class="send-btn">
-        <i class="bi bi-send-fill"></i>
-      </button>
-    </div>
-  </div>
-</div>
-{% endblock %}
+    <img src="image1.jpg" alt="Image 1" loading="lazy">
+    <img src="image2.jpg" alt="Image 2" loading="lazy">
+    <img src="image3.jpg" alt="Image 3" loading="lazy">
+</body>
+</html>

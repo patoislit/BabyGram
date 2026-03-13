@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BabyGram – Prihlásenie</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"/>
+</head>
+<body class="login-body">
+
+  <div class="login-wrap">
+
+    <!-- Dekoratívne bubliny -->
+    <div class="login-blobs" aria-hidden="true">
+      <div class="blob blob-1"></div>
+      <div class="blob blob-2"></div>
+      <div class="blob blob-3"></div>
+    </div>
+
+    <div class="login-card">
+
+      <!-- Logo -->
+      <div class="login-logo">
+        <span class="login-emoji">🍼</span>
+        <h1 class="login-brand">BabyGram</h1>
+        <p class="login-tagline">Miesto plné roztomilosti 🌸</p>
+      </div>
+
+      <!-- Form -->
+      <form method="POST" action="/login" class="login-form">
+        {% if error %}
+          <div class="login-error">{{ error }}</div>
+        {% endif %}
+
+        <div class="input-wrap">
+          <input
+            type="text"
+            name="username"
+            class="login-input"
+            placeholder="Tvoje meno..."
+            maxlength="30"
+            autocomplete="off"
+            autofocus
+            required
+          />
+          <span class="input-icon">✨</span>
+        </div>
+
+        <button type="submit" class="login-btn">
+          Vstúpiť <span>→</span>
+        </button>
+      </form>
+
+      <p class="login-hint">Žiadne heslo. Len meno a si vnútri. 💛</p>
+    </div>
+
+    <!-- Plávajúce emoji -->
+    <div class="login-floats" aria-hidden="true">
+      <span style="--d:0s;--x:10%;--y:15%">👶</span>
+      <span style="--d:1.2s;--x:80%;--y:10%">🌸</span>
+      <span style="--d:0.6s;--x:5%;--y:70%">💛</span>
+      <span style="--d:1.8s;--x:85%;--y:65%">🧸</span>
+      <span style="--d:0.3s;--x:50%;--y:5%">🌈</span>
+      <span style="--d:2.1s;--x:70%;--y:80%">💕</span>
+    </div>
+
+  </div>
+
+</body>
+</html>

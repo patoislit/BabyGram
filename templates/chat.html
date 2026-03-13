@@ -1,0 +1,91 @@
+{% extends "layout.html" %}
+{% block title %}Chat – BabyGram{% endblock %}
+
+{% block content %}
+<div class="chat-wrap">
+
+  <!-- ── Zoznam používateľov ──────────────────────────────────────────── -->
+  <aside class="chat-sidebar {% if target_user %}hidden-mobile{% endif %}" id="chatSidebar">
+    <div class="sidebar-header">
+      <h2>Správy <i class="bi bi-chat-heart-fill"></i></h2>
+    </div>
+    <div class="user-list">
+      {% for user in users %}
+      <a href="/chat/{{ user.id }}"
+         class="user-item {% if target_user and target_user.id == user.id %}active{% endif %}">
+        <div class="user-avatar-wrap">
+          <img src="https://loremflickr.com/60/60/baby,newborn?lock={{ user.avatar_seed }}"
+               alt="{{ user.username }}" class="user-avatar-img"/>
+          <span class="online-dot"></span>
+        </div>
+        <div class="user-info">
+          <span class="user-name">{{ user.username }}</span>
+          <span class="user-last">BabyGram člen 🌸</span>
+        </div>
+      </a>
+      {% else %}
+      <div class="no-users">
+        <span>Zatiaľ žiadni členovia 🥹</span>
+        <small>Pozvi priateľov!</small>
+      </div>
+      {% endfor %}
+    </div>
+  </aside>
+
+  <!-- ── Okno konverzácie ─────────────────────────────────────────────── -->
+  <section class="chat-main {% if not target_user %}hidden-mobile{% endif %}" id="chatMain">
+
+    {% if target_user %}
+    <!-- Hlavička konverzácie -->
+    <div class="conv-header">
+      <a href="/chat" class="back-btn show-mobile">
+        <i class="bi bi-chevron-left"></i>
+      </a>
+      <img src="https://loremflickr.com/60/60/baby,newborn?lock={{ target_user.avatar_seed }}"
+           alt="{{ target_user.username }}" class="conv-avatar"/>
+      <div>
+        <div class="conv-name">{{ target_user.username }}</div>
+        <div class="conv-status" id="typingStatus">online 🟢</div>
+      </div>
+    </div>
+
+    <!-- Správy -->
+    <div class="messages-area" id="messagesArea">
+      {% for msg in messages %}
+      <div class="msg-bubble {% if msg.sender_id == session['user_id'] %}mine{% else %}theirs{% endif %}">
+        <div class="bubble-text">{{ msg.text }}</div>
+        <div class="bubble-time">{{ msg.created_at[:16] if msg.created_at else '' }}</div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Input -->
+    <div class="chat-input-bar">
+      <input id="msgInput" type="text" placeholder="Napíš správu... 💬"
+             maxlength="500"
+             onkeydown="if(event.key==='Enter') chatSendMessage()"/>
+      <button onclick="chatSendMessage()" class="send-btn">
+        <i class="bi bi-send-fill"></i>
+      </button>
+    </div>
+
+    <!-- SocketIO init pre túto konverzáciu -->
+    <script>
+      const CHAT_TARGET_ID = {{ target_user.id }};
+      const CURRENT_USER_ID = {{ session['user_id'] }};
+      document.addEventListener('DOMContentLoaded', initChat);
+    </script>
+
+    {% else %}
+    <!-- Prázdny stav – nevybratá konverzácia -->
+    <div class="conv-empty">
+      <span class="conv-empty-icon">💬</span>
+      <h3>Vyber si konverzáciu</h3>
+      <p>Klikni na meno vľavo a začni chatovať 🌸</p>
+    </div>
+    {% endif %}
+
+  </section>
+
+</div>
+{% endblock %}

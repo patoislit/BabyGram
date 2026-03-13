@@ -1,0 +1,22 @@
+{% extends "layout.html" %}
+{% block title %}Reels – BabyGram{% endblock %}
+
+{% block content %}
+<div class="reels-wrap" id="reelsWrap">
+  <!-- Reels sa načítajú cez JS -->
+</div>
+
+<div id="reelsSentinel" class="sentinel"></div>
+
+<!-- Overlay pre tapping ľavá/pravá strana (simulácia TikTok/Reels navigácie) -->
+<div id="reelTapLeft"  class="reel-tap reel-tap-left"  onclick="prevReel()"></div>
+<div id="reelTapRight" class="reel-tap reel-tap-right" onclick="nextReel()"></div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  // Inicializácia reels po načítaní stránky
+  document.addEventListener('DOMContentLoaded', initReels);
+</script>
+{% endblock %}

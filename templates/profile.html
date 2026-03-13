@@ -1,0 +1,88 @@
+{% extends "layout.html" %}
+{% block title %}Profil – BabyGram{% endblock %}
+
+{% block content %}
+<div class="profile-wrap">
+
+  <!-- ── Profil header ───────────────────────────────────────────────── -->
+  <div class="profile-header">
+    <div class="profile-avatar-ring">
+      <img src="https://loremflickr.com/160/160/baby,newborn?lock={{ user.avatar_seed }}"
+           alt="{{ user.username }}" class="profile-avatar-img"/>
+    </div>
+    <h2 class="profile-name">{{ user.username }}</h2>
+    <p class="profile-joined">Člen od {{ user.created_at[:10] }}</p>
+
+    <!-- Štatistiky -->
+    <div class="profile-stats">
+      <div class="stat-item">
+        <span class="stat-num">{{ total_likes }}</span>
+        <span class="stat-label">Lajkov 💛</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num">{{ liked_posts|length }}</span>
+        <span class="stat-label">Obľúbených</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num">{{ total_comments }}</span>
+        <span class="stat-label">Komentárov</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Obľúbené fotky ──────────────────────────────────────────────── -->
+  <div class="profile-section">
+    <h3 class="section-title">Obľúbené fotky ❤️</h3>
+    {% if liked_posts %}
+    <div class="profile-grid">
+      {% for p in liked_posts %}
+      <div class="profile-thumb">
+        <img src="https://loremflickr.com/300/300/baby,newborn?lock={{ p.image_seed }}"
+             alt="{{ p.caption }}" loading="lazy"/>
+        <div class="thumb-overlay">
+          <i class="bi bi-heart-fill"></i>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <span>🥹</span>
+      <p>Zatiaľ žiadne obľúbené. Choď lajkovať!</p>
+      <a href="/feed" class="go-btn">Otvoriť Feed →</a>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- ── Moje komentáre ──────────────────────────────────────────────── -->
+  <div class="profile-section">
+    <h3 class="section-title">Moje komentáre 💬</h3>
+    {% if my_comments %}
+    <div class="comment-history">
+      {% for c in my_comments %}
+      <div class="history-item">
+        <img src="https://loremflickr.com/50/50/baby,newborn?lock={{ c.image_seed }}" alt="" class="history-thumb"/>
+        <div class="history-text">
+          <p>{{ c.text }}</p>
+          <small>{{ c.created_at[:16] if c.created_at else '' }}</small>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <span>💭</span>
+      <p>Žiadne komentáre. Daj vedieť čo si myslíš!</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Odhlásiť sa -->
+  <div class="profile-logout">
+    <a href="/logout" class="logout-full-btn">
+      <i class="bi bi-box-arrow-right"></i> Odhlásiť sa
+    </a>
+  </div>
+
+</div>
+{% endblock %}

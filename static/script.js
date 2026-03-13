@@ -352,35 +352,63 @@ function handleReelLike(btn) {
    CHAT (Socket.IO)
 ═══════════════════════════════════════════════════════════════ */
 
-let socket       = null;
-let typingTimer  = null;
+let socket      = null;
+let chatReady   = false;  // true keď socket potvrdí join
 
-/** Inicializácia Socket.IO spojenia pre konkrétnu konverzáciu */
+/** Inicializácia Socket.IO – volá sa z chat.html */
 function initChat() {
   if (typeof CHAT_TARGET_ID === 'undefined') return;
 
-  socket = io({ transports: ['websocket', 'polling'] });
+  // polling ako záloha ak WebSocket blokuje proxy na Renderi
+  socket = io({
+    transports: ['websocket', 'polling'],
+    upgrade: true,
+    reconnection: true,
+    reconnectionAttempts: 5,
+    reconnectionDelay: 1000,
+  });
 
+  // ── Udalosti ──────────────────────────────────────────────
   socket.on('connect', () => {
+    console.log('✅ Socket spojený:', socket.id);
     socket.emit('join_chat', { target_id: CHAT_TARGET_ID });
   });
 
-  // Príjem novej správy
+  socket.on('joined', () => {
+    chatReady = true;
+    console.log('✅ Vstúpil do miestnosti');
+  });
+
+  socket.on('disconnect', () => {
+    chatReady = false;
+    console.log('❌ Socket odpojený');
+  });
+
+  // Príjem správy od DRUHÉHO používateľa
+  // (vlastné správy sa zobrazujú cez optimistic update – bez duplikátu)
   socket.on('new_message', (msg) => {
-    appendMessage(msg);
+    // Ignoruj ak je to naša vlastná správa (dvojitá bezpečnosť)
+    if (msg.sender_id === CURRENT_USER_ID) return;
+    appendMessage({
+      text:       msg.text,
+      is_mine:    false,
+      created_at: msg.created_at,
+    });
     hideTypingIndicator();
   });
 
-  // Indikátor písania
   socket.on('user_typing', (data) => {
     showTypingIndicator(data.username);
   });
 
-  // Scroll na koniec pri otvorení
+  socket.on('connect_error', (err) => {
+    console.warn('Socket chyba:', err.message);
+  });
+
   scrollToBottom();
 }
 
-/** Odošle správu cez socket */
+/** Odošle správu – najprv zobrazí lokálne, potom pošle cez socket */
 function chatSendMessage() {
   const input = document.getElementById('msgInput');
   if (!input) return;
@@ -388,16 +416,21 @@ function chatSendMessage() {
   if (!text) return;
   input.value = '';
 
-  // Zobrazí vlastnú správu okamžite (optimistic)
-  appendMessage({
-    sender_id: CURRENT_USER_ID,
-    text,
-    is_mine: true,
-    created_at: new Date().toLocaleTimeString('sk-SK', { hour: '2-digit', minute: '2-digit' }),
-  });
+  const now = new Date().toLocaleTimeString('sk-SK', { hour: '2-digit', minute: '2-digit' });
 
-  if (socket) {
+  // 1. Okamžite zobraz vlastnú správu (optimistic update)
+  appendMessage({ text, is_mine: true, created_at: now });
+
+  // 2. Odošli cez socket (server uloží do DB + pošle príjemcovi)
+  if (socket && socket.connected) {
     socket.emit('send_message', { target_id: CHAT_TARGET_ID, text });
+  } else {
+    // Záloha: HTTP POST ak socket nefunguje
+    fetch('/api/send_message', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ target_id: CHAT_TARGET_ID, text }),
+    }).catch(e => console.error('Fallback send error:', e));
   }
 }
 
@@ -420,6 +453,7 @@ function scrollToBottom() {
 }
 
 let typingHideTimer = null;
+
 function showTypingIndicator(username) {
   const el = document.getElementById('typingStatus');
   if (el) el.textContent = `${username} píše... ✍️`;
@@ -432,9 +466,9 @@ function hideTypingIndicator() {
   if (el) el.textContent = 'online 🟢';
 }
 
-// Indikátor písania – odošle event pri každom stlačení klávesu
+// Typing indikátor – odošle event
 document.addEventListener('input', (e) => {
-  if (e.target.id !== 'msgInput' || !socket) return;
+  if (e.target.id !== 'msgInput' || !socket?.connected) return;
   socket.emit('typing', { target_id: CHAT_TARGET_ID });
 });
 

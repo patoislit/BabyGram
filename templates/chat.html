@@ -14,7 +14,7 @@
       <a href="/chat/{{ user.id }}"
          class="user-item {% if target_user and target_user.id == user.id %}active{% endif %}">
         <div class="user-avatar-wrap">
-          <img src="https://loremflickr.com/60/60/baby,newborn?lock={{ user.avatar_seed }}"
+          <img src="https://loremflickr.com/60/60/baby,face,cute?lock={{ user.avatar_seed }}"
                alt="{{ user.username }}" class="user-avatar-img"/>
           <span class="online-dot"></span>
         </div>
@@ -41,7 +41,7 @@
       <a href="/chat" class="back-btn show-mobile">
         <i class="bi bi-chevron-left"></i>
       </a>
-      <img src="https://loremflickr.com/60/60/baby,newborn?lock={{ target_user.avatar_seed }}"
+      <img src="https://loremflickr.com/60/60/baby,face,cute?lock={{ target_user.avatar_seed }}"
            alt="{{ target_user.username }}" class="conv-avatar"/>
       <div>
         <div class="conv-name">{{ target_user.username }}</div>
@@ -71,9 +71,38 @@
 
     <!-- SocketIO init pre túto konverzáciu -->
     <script>
-      const CHAT_TARGET_ID = {{ target_user.id }};
+      const CHAT_TARGET_ID  = {{ target_user.id }};
       const CURRENT_USER_ID = {{ session['user_id'] }};
-      document.addEventListener('DOMContentLoaded', initChat);
+      // Počet správ pri načítaní – polling zistí nové
+      let lastMessageCount  = {{ messages|length }};
+
+      document.addEventListener('DOMContentLoaded', () => {
+        initChat();
+        // Polling záloha – každé 3s načíta nové správy ak socket nefunguje
+        setInterval(pollNewMessages, 3000);
+      });
+
+      async function pollNewMessages() {
+        try {
+          const res  = await fetch('/api/messages/{{ target_user.id }}');
+          const msgs = await res.json();
+          if (msgs.length > lastMessageCount) {
+            // Pridaj len nové správy (od indexu lastMessageCount)
+            const newMsgs = msgs.slice(lastMessageCount);
+            newMsgs.forEach(m => {
+              // Nezobrazuj ak sme ju už zobrazili cez socket/optimistic
+              if (m.is_mine) return;
+              // Skontroluj či správa ešte nie je v DOM
+              const area = document.getElementById('messagesArea');
+              const last = area?.lastElementChild?.querySelector('.bubble-text')?.textContent;
+              if (last !== m.text) {
+                appendMessage({ text: m.text, is_mine: false, created_at: m.created_at });
+              }
+            });
+            lastMessageCount = msgs.length;
+          }
+        } catch(e) { /* ticho ignoruj */ }
+      }
     </script>
 
     {% else %}
